@@ -94,7 +94,7 @@ public class LogStreamManager implements PodWatcher {
 
   private FileSystemEventFetcher recursiveDirectoryWatcher;
   private Thread recursiveEventProcessorThread;
-  private RecursiveFSEventProcessor recursiveEventProcessor;
+  private RecursiveFileSystemEventProcessor recursiveEventProcessor;
 
   protected LogStreamManager() {
     if(SingerSettings.getSingerConfig()!=null &&
@@ -105,7 +105,7 @@ public class LogStreamManager implements PodWatcher {
         recursiveDirectoryWatcher = new FileSystemEventFetcher();
         recursiveDirectoryWatcher.start("RecursiveDirectoryWatcher");
 
-        recursiveEventProcessor = new RecursiveFSEventProcessor(this);
+        recursiveEventProcessor = new RecursiveFileSystemEventProcessor(this);
         recursiveEventProcessorThread = new Thread(recursiveEventProcessor);
         recursiveEventProcessorThread.setDaemon(true);
         recursiveEventProcessorThread.start();

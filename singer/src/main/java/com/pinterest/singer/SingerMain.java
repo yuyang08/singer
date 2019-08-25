@@ -135,7 +135,6 @@ public final class SingerMain {
     LOG.warn("Starting Singer logging agent.");
     try {
       boolean validateConfig = parseValidateArgs(args);
-
       if (validateConfig) {
         validateConfig();
       } else {

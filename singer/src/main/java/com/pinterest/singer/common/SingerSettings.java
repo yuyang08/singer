@@ -1,12 +1,12 @@
 /**
  * Copyright 2019 Pinterest, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,12 +40,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * SingerSettings encapsulate the global variables (thread pools, etc.) that are used in Singer.
@@ -86,10 +84,10 @@ public final class SingerSettings {
   private static Map<String, FileSystemMonitor> fsMonitorMap = new HashMap<>();
 
   public static HeartbeatGenerator heartbeatGenerator;
-  
+
   // initialized here so that unit tests aren't required to call the initialize method below
-  private static SortedMap<String, Collection<SingerLogConfig>> logConfigMap = new TreeMap<>();
-  
+  private static Map<String, Collection<SingerLogConfig>> logConfigMap = new HashMap<>();
+
   //environment is production by default
   private static Environment environment = new Environment();
 
@@ -97,33 +95,29 @@ public final class SingerSettings {
   }
 
   public static void initialize(SingerConfig config)
-      throws ClassNotFoundException,
-             InvocationTargetException,
-             IOException,
-             IllegalAccessException,
-             NoSuchMethodException,
-      SingerLogException {
+      throws ClassNotFoundException, InvocationTargetException, IOException, IllegalAccessException,
+          NoSuchMethodException, SingerLogException {
     setSingerConfig(config);
 
     loadAndSetSingerEnvironmentIfConfigured(config);
     LOG.warn("Singer environment has been configured to:" + environment);
-    
+
     SingerSettings.logProcessorExecutor = Executors.newScheduledThreadPool(
-        singerConfig.getThreadPoolSize(),
-        new ThreadFactoryBuilder().setNameFormat("Processor: %d").build());
+        singerConfig.getThreadPoolSize(), new ThreadFactoryBuilder().setNameFormat("Processor: %d").build());
 
     SingerSettings.logWritingExecutors = new HashMap<>();
-    
+
     backgroundTaskExecutor = Executors.newSingleThreadScheduledExecutor(
             new ThreadFactoryBuilder().setNameFormat("Background-Task-Executor").build());
-    
+
     // This is metric will help us track how frequently is singer getting restarted
     Stats.setGauge(SingerMetrics.SINGER_START_INDICATOR, 1);
-    backgroundTaskExecutor.schedule(()->Stats.setGauge(SingerMetrics.SINGER_START_INDICATOR, 0), SINGER_STARTING_INDICATOR_DURATION_IN_MINUTES, TimeUnit.MINUTES);
-    // We can alert on too many singer restarts on a given host so we can catch bad Singer code / too many exceptions 
-    
-    initializeConfigMap(config);
+    backgroundTaskExecutor.schedule(
+            () -> Stats.setGauge(SingerMetrics.SINGER_START_INDICATOR, 0),
+            SINGER_STARTING_INDICATOR_DURATION_IN_MINUTES, TimeUnit.MINUTES);
 
+    // We can alert on too many singer restarts on a given host so we can catch bad Singer code / too many exceptions
+    initializeConfigMap(config);
     if (config.isSetLogConfigs()) {
       // configure cluster signatures for each configured log cluster
       for (SingerLogConfig logConfig : config.getLogConfigs()) {
@@ -166,14 +160,14 @@ public final class SingerSettings {
     // The reason for this call is to start FSM if it's the regular singer environment before
     // LogStreamManager starts making calls; else we will miss FS events.
 
-    // It's simply used to prime and start the thread; I could break it into 2 method calls: 
-    // create object and then start but then we will need to call start everywhere we call get 
+    // It's simply used to prime and start the thread; I could break it into 2 method calls:
+    // create object and then start but then we will need to call start everywhere we call get
     // or create so I combined them into one.
-    
+
     // start regular singer
     FileSystemMonitor globalFsm = new FileSystemMonitor(singerConfig, LogStreamManager.NON_KUBERNETES_POD_ID);
     fsMonitorMap.put(LogStreamManager.NON_KUBERNETES_POD_ID, globalFsm);
-    
+
     if (singerConfig != null ) {
       LogStreamManager.initializeLogStreams();
       // check and start kubernetes singer
@@ -182,7 +176,7 @@ public final class SingerSettings {
         instance.start();
       }
     }
-    
+
     if (singerConfig != null && singerConfig.isSetLogMonitorConfig()) {
       LOG.info("Log monitor started");
       int monitorIntervalInSecs = singerConfig.getLogMonitorConfig().getMonitorIntervalInSecs();
@@ -202,9 +196,12 @@ public final class SingerSettings {
     return getInstance;
   }
 
-  public static SortedMap<String, Collection<SingerLogConfig>> loadLogConfigMap(SingerConfig config) {
-    SortedMap<String, Collection<SingerLogConfig>> logConfigMap = new TreeMap<>();
-    if(config.getLogConfigs()!=null) {
+  /**
+   *  Get logDir to log configuration map
+   */
+  public static Map<String, Collection<SingerLogConfig>> loadLogConfigMap(SingerConfig config) {
+    Map<String, Collection<SingerLogConfig>> logConfigMap = new HashMap<>();
+    if(config.getLogConfigs() != null) {
         for (SingerLogConfig singerLogConfig : config.getLogConfigs()) {
             Collection<SingerLogConfig> collection = logConfigMap.get(singerLogConfig.getLogDir());
             if (collection == null) {
@@ -223,7 +220,7 @@ public final class SingerSettings {
       try {
         mon = new FileSystemMonitor(singerConfig, podUid);
         fsMonitorMap.put(podUid, mon);
-        
+
         LOG.info("Created and started FileSystemMonitor for "+podUid);
         mon.start();
       } catch (IOException e) {
@@ -232,13 +229,13 @@ public final class SingerSettings {
     }
     return mon;
   }
-  
+
   protected static void loadAndSetSingerEnvironmentIfConfigured(SingerConfig config) {
     if (config.getEnvironmentProviderClass() != null) {
       try {
         String environmentProviderClass = config.getEnvironmentProviderClass();
         @SuppressWarnings("unchecked")
-        Class<EnvironmentProvider> providerClass = (Class<EnvironmentProvider>) 
+        Class<EnvironmentProvider> providerClass = (Class<EnvironmentProvider>)
             Class.forName(environmentProviderClass);
         EnvironmentProvider provider = providerClass.newInstance();
         Environment env = provider.getEnvironment();
@@ -251,27 +248,27 @@ public final class SingerSettings {
       }
     }
   }
-  
+
   public static Map<String, FileSystemMonitor> getFsMonitorMap() {
     return fsMonitorMap;
   }
-  
+
   public static LogMonitor getLogMonitor() {
     return logMonitor;
   }
-  
+
   public static Map<String, ExecutorService> getLogWritingExecutors() {
     return logWritingExecutors;
   }
-  
+
   public static SingerConfig getSingerConfig() {
     return singerConfig;
   }
-  
+
   public static void setSingerConfig(SingerConfig singerConfig) {
     SingerSettings.singerConfig = singerConfig;
   }
-  
+
   public static void reset() {
     for(Entry<String, FileSystemMonitor> mon:fsMonitorMap.entrySet()) {
         mon.getValue().stop();
@@ -286,23 +283,23 @@ public final class SingerSettings {
     singerConfig = null;
     fsMonitorMap.clear();
   }
-  
+
   public static SortedMap<String, Collection<SingerLogConfig>> getLogConfigMap() {
     return logConfigMap;
   }
-  
+
   public static ScheduledExecutorService getBackgroundTaskExecutor() {
     return backgroundTaskExecutor;
   }
-  
+
   public static void setBackgroundTaskExecutor(ScheduledExecutorService backgroundTaskExecutor) {
     SingerSettings.backgroundTaskExecutor = backgroundTaskExecutor;
   }
-  
+
   public static ScheduledExecutorService getLogProcessorExecutor() {
     return logProcessorExecutor;
   }
-  
+
   /**
    * Refactored so unit tests can call
    * @param config
@@ -310,11 +307,11 @@ public final class SingerSettings {
   public static void initializeConfigMap(SingerConfig config) {
     logConfigMap = loadLogConfigMap(config);
   }
-  
+
   public static Environment getEnvironment() {
     return environment;
   }
-  
+
   @VisibleForTesting
   public static void setEnvironment(Environment environment) {
     SingerSettings.environment = environment;

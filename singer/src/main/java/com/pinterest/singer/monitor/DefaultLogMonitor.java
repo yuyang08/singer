@@ -127,8 +127,7 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
    * @param monitorIntervalInSecs monitor interval in seconds.
    * @param singerConfig          the SingerConfig.
    */
-  protected DefaultLogMonitor(int monitorIntervalInSecs,
-                              SingerConfig singerConfig)
+  protected DefaultLogMonitor(int monitorIntervalInSecs, SingerConfig singerConfig)
       throws ConfigurationException {
     Preconditions.checkArgument(monitorIntervalInSecs > 0);
     this.monitorIntervalInSecs = monitorIntervalInSecs;
@@ -169,8 +168,7 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
     }
   }
 
-  public static LogMonitor getInstance(int monitorIntervalInSecs, 
-                                       SingerConfig singerConfig)
+  public static LogMonitor getInstance(int monitorIntervalInSecs, SingerConfig singerConfig)
       throws ConfigurationException {
     if (INSTANCE == null) {
       synchronized (DefaultLogMonitor.class) {
@@ -189,7 +187,7 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
    *
    * @throws LogMonitorException when fail to monitor one of the SingerLogs.
    */
-  public void monitorLogs() throws LogMonitorException {
+  public void monitorLogs() {
     LOG.info("Start monitoring cycle.");
     long monitorCycleStartTime = System.currentTimeMillis();
     Collection<LogStream> logStreams = LogStreamManager.getLogStreams();
@@ -231,8 +229,7 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
    *
    * @throws Exception when fail to monitor the SingerLog.
    */
-  private LogStreamProcessor createLogStreamProcessor(SingerLogConfig singerLogConfig,
-                                                      LogStream logStream)
+  private LogStreamProcessor createLogStreamProcessor(SingerLogConfig singerLogConfig, LogStream logStream)
       throws ConfigurationException, LogStreamReaderException, LogStreamWriterException {
     LogStreamReader reader =
         createLogStreamReader(logStream, singerLogConfig.getLogStreamReaderConfig());
@@ -437,9 +434,6 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
       cleanUpLogs();
       // Report stats.
       reportStats();
-    } catch (LogMonitorException t) {
-      LOG.error("Caught exception when monitor log streams", t);
-      Stats.incr("singer.monitor.exception");
     } catch (Exception e) {
       LOG.error("Caught unexpected exception", e);
       Stats.incr("singer.monitor.unexpected_exception");
@@ -625,8 +619,7 @@ public class DefaultLogMonitor implements LogMonitor, Runnable {
       groupMatcher.appendTail(sb);
       return sb.toString();
     } catch (NumberFormatException e) {
-      throw new ConfigurationException("Cannot expand " + name + " in log stream " + logStreamName,
-          e);
+      throw new ConfigurationException("Cannot expand " + name + " in log stream " + logStreamName, e);
     }
   }
 }

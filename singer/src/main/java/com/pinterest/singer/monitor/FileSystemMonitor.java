@@ -86,7 +86,6 @@ public class FileSystemMonitor implements Runnable {
 
   /**
    *  Start the file system monitor thread if it has not been started yet.
-   *
    */
   public void start() {
     // we don't want to start another thread for the same instance of FileSystemEventFetcher
@@ -124,11 +123,6 @@ public class FileSystemMonitor implements Runnable {
   }
 
   private void handleEntryCreateEvent(Path parentDir,Path addedFile) throws IOException {
-    if (addedFile.toString().startsWith(".")) {
-      // ignore the watermark files
-      LOG.debug("Found a watermark file {}", addedFile);
-      return;
-    }
     Path fullAddedPath = parentDir.resolve(addedFile);
     File theFile = fullAddedPath.toFile();
     if (!theFile.exists()) {

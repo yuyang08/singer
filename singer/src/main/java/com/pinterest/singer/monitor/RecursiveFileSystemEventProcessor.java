@@ -38,12 +38,12 @@ import com.pinterest.singer.thrift.configuration.SingerLogConfig;
  * This class runs as a service continuously checks for new filesystem events, extrapolates which pod they are for and
  * finds if there is a match for singerlogconfig on these events to register logstreams for the same.
  */
-public class RecursiveFSEventProcessor implements Runnable {
+public class RecursiveFileSystemEventProcessor implements Runnable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RecursiveFSEventProcessor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RecursiveFileSystemEventProcessor.class);
   private LogStreamManager lsm;
 
-  public RecursiveFSEventProcessor(LogStreamManager lsm) {
+  public RecursiveFileSystemEventProcessor(LogStreamManager lsm) {
     this.lsm = lsm;
   }
 
